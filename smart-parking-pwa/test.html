@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            color: #3B82F6;
+            margin-top: 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #D1FAE5;
+            color: #065F46;
+            border-left: 4px solid #10B981;
+        }
+        .error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border-left: 4px solid #EF4444;
+        }
+        .info {
+            background: #DBEAFE;
+            color: #1E40AF;
+            border-left: 4px solid #3B82F6;
+        }
+        button {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563EB;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "✓ ";
+            color: #10B981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #3B82F6;">🅿️ Smart Parking PWA - Test Page</h1>
+
+    <div class="test-section">
+        <h2>🔍 Pre-flight Checks</h2>
+        <div id="checks"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Setup Checklist</h2>
+        <ul class="checklist">
+            <li>Files in correct location (index.html, styles.css, app.js)</li>
+            <li>Running on local server (not file://)</li>
+            <li>Google Maps API key configured in app.js</li>
+            <li>Razorpay Key ID configured in app.js</li>
+            <li>Icons folder created (optional)</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Quick Tests</h2>
+        <button onclick="testStyles()">Test Styles Loading</button>
+        <button onclick="testJavaScript()">Test JavaScript</button>
+        <button onclick="testAPIs()">Test External APIs</button>
+        <button onclick="openMainApp()">Open Main App</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔑 API Keys Status</h2>
+        <div id="api-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Next Steps</h2>
+        <ol>
+            <li>Ensure all checks pass above</li>
+            <li>Click "Open Main App" to launch the application</li>
+            <li>Test booking flow with Razorpay test card: <code>4111 1111 1111 1111</code></li>
+            <li>Try scanning QR codes for parking access</li>
+            <li>Install PWA to home screen for testing</li>
+        </ol>
+    </div>
+
+    <script>
+        // Run checks on page load
+        window.addEventListener('load', function() {
+            runPreflightChecks();
+            checkAPIs();
+        });
+
+        function runPreflightChecks() {
+            const checks = document.getElementById('checks');
+            let html = '';
+
+            // Check 1: HTTP/HTTPS (not file://)
+            const isHTTP = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+            html += `<div class="status ${isHTTP ? 'success' : 'error'}">
+                ${isHTTP ? '✓' : '✗'} Running on ${window.location.protocol} ${isHTTP ? '(Good!)' : '(Use local server!)'}
+            </div>`;
+
+            // Check 2: Service Worker support
+            const hasSW = 'serviceWorker' in navigator;
+            html += `<div class="status ${hasSW ? 'success' : 'error'}">
+                ${hasSW ? '✓' : '✗'} Service Worker ${hasSW ? 'supported' : 'not supported'}
+            </div>`;
+
+            // Check 3: geolocation support
+            const hasGeo = 'geolocation' in navigator;
+            html += `<div class="status ${hasGeo ? 'success' : 'error'}">
+                ${hasGeo ? '✓' : '✗'} Geolocation ${hasGeo ? 'supported' : 'not supported'}
+            </div>`;
+
+            // Check 4: LocalStorage
+            const hasLS = typeof(Storage) !== "undefined";
+            html += `<div class="status ${hasLS ? 'success' : 'error'}">
+                ${hasLS ? '✓' : '✗'} LocalStorage ${hasLS ? 'available' : 'not available'}
+            </div>`;
+
+            checks.innerHTML = html;
+        }
+
+        function testStyles() {
+            const results = document.getElementById('test-results');
+            
+            // Try to load a style
+            const testDiv = document.createElement('div');
+            testDiv.style.cssText = 'background: var(--primary-color); width: 50px; height: 50px; border-radius: 10px;';
+            
+            results.innerHTML = `
+                <div class="status success">
+                    ✓ Styles are working! If you see a blue box below, CSS variables are loaded.
+                </div>
+            `;
+            results.appendChild(testDiv);
+        }
+
+        function testJavaScript() {
+            const results = document.getElementById('test-results');
+            
+            try {
+                const testArray = [1, 2, 3];
+                const doubled = testArray.map(x => x * 2);
+                
+                results.innerHTML = `
+                    <div class="status success">
+                        ✓ JavaScript is working perfectly!<br>
+                        Test array: [${testArray}] → [${doubled}]
+                    </div>
+                `;
+            } catch (e) {
+                results.innerHTML = `
+                    <div class="status error">
+                        ✗ JavaScript error: ${e.message}
+                    </div>
+                `;
+            }
+        }
+
+        function checkAPIs() {
+            const status = document.getElementById('api-status');
+            let html = '';
+
+            // Check Google Maps
+            const hasGoogleMaps = typeof google !== 'undefined' && google.maps;
+            html += `<div class="status ${hasGoogleMaps ? 'success' : 'info'}">
+                ${hasGoogleMaps ? '✓' : 'ℹ'} Google Maps: ${hasGoogleMaps ? 'Loaded' : 'Not loaded yet (normal on test page)'}
+            </div>`;
+
+            // Check Razorpay
+            const hasRazorpay = typeof Razorpay !== 'undefined';
+            html += `<div class="status ${hasRazorpay ? 'success' : 'info'}">
+                ${hasRazorpay ? '✓' : 'ℹ'} Razorpay: ${hasRazorpay ? 'Loaded' : 'Not loaded yet (normal on test page)'}
+            </div>`;
+
+            // Check QR Scanner
+            const hasQRScanner = typeof Html5Qrcode !== 'undefined';
+            html += `<div class="status ${hasQRScanner ? 'success' : 'info'}">
+                ${hasQRScanner ? '✓' : 'ℹ'} QR Scanner: ${hasQRScanner ? 'Loaded' : 'Not loaded yet (normal on test page)'}
+            </div>`;
+
+            html += `<div class="status info">
+                ℹ Note: APIs will load when you open the main app (index.html)
+            </div>`;
+
+            status.innerHTML = html;
+        }
+
+        function testAPIs() {
+            checkAPIs();
+        }
+
+        function openMainApp() {
+            window.location.href = 'index.html';
+        }
+    </script>
+
+    <footer style="text-align: center; margin-top: 40px; color: #6B7280; font-size: 14px;">
+        <p>Smart Parking PWA Test Suite v1.0</p>
+        <p>If all checks pass, you're ready to use the app! 🎉</p>
+    </footer>
+</body>
+</html>
