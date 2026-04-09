@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="description" content="Smart Parking - Find and book parking spots instantly">
+    
+    <title>Smart Parking</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icons/favicon.png">
+    
+    <!-- Preconnect to Google Maps -->
+    <link rel="preconnect" href="https://maps.googleapis.com">
+    <link rel="dns-prefetch" href="https://maps.googleapis.com">
+    
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
+    <!-- Google Maps API -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places,geometry"></script>
+    
+    <!-- QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main Stylesheet - CRITICAL: Make sure this path is correct -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Loading Smart Parking...</p>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="app-container" style="display: none;">
+        
+        <!-- Header -->
+        <header id="app-header" class="app-header">
+            <button id="menu-btn" class="icon-btn" aria-label="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 id="header-title" class="header-title">Smart Parking</h1>
+            <button id="notifications-btn" class="icon-btn" aria-label="Notifications">
+                <i class="fas fa-bell"></i>
+                <span id="notification-badge" class="notification-badge" style="display: none;">3</span>
+            </button>
+        </header>
+
+        <!-- Side Menu -->
+        <div id="side-menu" class="side-menu">
+            <div class="side-menu-header">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <h3 id="user-name">Guest User</h3>
+                        <p id="user-email">guest@parking.com</p>
+                    </div>
+                </div>
+                <button id="close-menu" class="close-menu-btn" aria-label="Close menu">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <nav class="side-menu-nav">
+                <a href="#" class="menu-item active" data-page="landing">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="#" class="menu-item" data-page="map">
+                    <i class="fas fa-map-marked-alt"></i> Parking Map
+                </a>
+                <a href="#" class="menu-item" data-page="bookings">
+                    <i class="fas fa-ticket-alt"></i> My Bookings
+                </a>
+                <a href="#" class="menu-item" data-page="vehicles">
+                    <i class="fas fa-car"></i> My Vehicles
+                </a>
+                <a href="#" class="menu-item" data-page="payments">
+                    <i class="fas fa-credit-card"></i> Payment Methods
+                </a>
+                <a href="#" class="menu-item" data-page="settings">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="#" class="menu-item" data-page="help">
+                    <i class="fas fa-question-circle"></i> Help & Support
+                </a>
+                <a href="#" id="logout-btn" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </nav>
+            <div class="menu-footer">
+                <button id="install-pwa-btn" class="install-pwa-btn" style="display: none;">
+                    <i class="fas fa-download"></i> Install App
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu Overlay -->
+        <div id="menu-overlay" class="menu-overlay"></div>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="main-content">
+            
+            <!-- Landing Page (QR Scan Entry) -->
+            <div id="landing-page" class="page active">
+                <div class="landing-container">
+                    <div class="facility-info">
+                        <i class="fas fa-map-marker-alt facility-icon"></i>
+                        <h2 id="facility-name">Campus West Parking</h2>
+                        <p id="facility-location">Level 1 - Entrance A</p>
+                    </div>
+
+                    <div class="availability-card">
+                        <div class="availability-header">
+                            <i class="fas fa-parking"></i>
+                            <span id="available-count">47</span> / <span id="total-spots">200</span>
+                        </div>
+                        <p class="availability-label">Available Now</p>
+                        <p class="update-time">Updated 2 min ago</p>
+                    </div>
+
+                    <div class="breakdown-grid">
+                        <div class="breakdown-item">
+                            <div class="breakdown-icon regular">
+                                <i class="fas fa-car"></i>
+                            </div>
+                            <div>
+                                <p class="breakdown-label">Regular</p>
+                                <p class="breakdown-count">40 spots</p>
+                            </div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="breakdown-icon handicap">
+                                <i class="fas fa-wheelchair"></i>
+                            </div>
+                            <div>
+                                <p class="breakdown-label">Handicap</p>
+                                <p class="breakdown-count">3 spots</p>
+                            </div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="breakdown-icon ev">
+                                <i class="fas fa-charging-station"></i>
+                            </div>
+                            <div>
+                                <p class="breakdown-label">EV Charging</p>
+                                <p class="breakdown-count">4 spots</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="view-map-btn" class="btn btn-primary btn-large">
+                        <i class="fas fa-map"></i> View Available Spots
+                    </button>
+
+                    <div class="divider">
+                        <span>or</span>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="guest-continue-btn" class="btn btn-secondary">
+                            Continue as Guest
+                        </button>
+                        <button id="signin-btn" class="btn btn-outline">
+                            Sign In / Register
+                        </button>
+                    </div>
+
+                    <div class="tip-box">
+                        <i class="fas fa-lightbulb"></i>
+                        <p>Tip: Add to Home Screen for faster access</p>
+                    </div>
+
+                    <button id="scan-qr-btn" class="btn btn-outline btn-icon">
+                        <i class="fas fa-qrcode"></i> Scan QR Code
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parking Map Page -->
+            <div id="map-page" class="page">
+                <div class="map-controls">
+                    <div class="control-row">
+                        <select id="level-selector" class="level-selector">
+                            <option value="1">Level 1</option>
+                            <option value="2" selected>Level 2</option>
+                            <option value="3">Level 3</option>
+                        </select>
+                        <button id="filter-btn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-filter"></i> Filters
+                        </button>
+                        <button id="refresh-map-btn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+
+                    <div class="availability-bar">
+                        <div class="availability-item">
+                            <span class="availability-dot available"></span>
+                            <span id="regular-available">40</span> Regular
+                        </div>
+                        <div class="availability-item">
+                            <span class="availability-dot handicap"></span>
+                            <span id="handicap-available">3</span> Handicap
+                        </div>
+                        <div class="availability-item">
+                            <span class="availability-dot ev"></span>
+                            <span id="ev-available">4</span> EV
+                        </div>
+                    </div>
+
+                    <div id="filter-options" class="filter-options" style="display: none;">
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="filter-available" checked>
+                            <span>Available Only</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="filter-ev">
+                            <span>EV Charging</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="filter-handicap">
+                            <span>Handicap</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="filter-near-exit">
+                            <span>Near Exit</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Google Map Container -->
+                <div id="google-map" class="google-map"></div>
+
+                <!-- Parking Grid (Alternative View) -->
+                <div id="parking-grid" class="parking-grid" style="display: none;">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="legend-color available"></span> Available
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color occupied"></span> Occupied
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color reserved"></span> Reserved
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color handicap"></span> Handicap
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color ev"></span> EV Charging
+                    </div>
+                </div>
+
+                <button id="toggle-view-btn" class="floating-btn">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+
+            <!-- Bookings Page -->
+            <div id="bookings-page" class="page">
+                <div class="bookings-container">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="active">Active</button>
+                        <button class="tab-btn" data-tab="upcoming">Upcoming</button>
+                        <button class="tab-btn" data-tab="history">History</button>
+                    </div>
+
+                    <div id="active-bookings" class="tab-content active">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <div id="upcoming-bookings" class="tab-content">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <div id="history-bookings" class="tab-content">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicles Page -->
+            <div id="vehicles-page" class="page">
+                <div class="vehicles-container">
+                    <div id="vehicles-list">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                    <button id="add-vehicle-btn" class="btn btn-primary btn-large">
+                        <i class="fas fa-plus"></i> Add Vehicle
+                    </button>
+                </div>
+            </div>
+            
+        </main>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <a href="#" class="nav-item active" data-page="landing">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item" data-page="map">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Map</span>
+            </a>
+            <a href="#" class="nav-item" data-page="bookings">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Bookings</span>
+            </a>
+            <a href="#" class="nav-item" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="spot-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-spot-title">Spot #22</h3>
+                <button class="modal-close" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="spot-modal-body">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Book Parking Spot</h3>
+                <button class="modal-close" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="booking-modal-body">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div id="qr-scanner-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Scan QR Code</h3>
+                <button class="modal-close" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="qr-reader" style="width: 100%;"></div>
+                <p class="qr-instructions">Position the QR code within the frame</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- CRITICAL: Emergency loader script -->
+    <script>
+        // Emergency fallback - ensures app loads even if main script fails
+        (function() {
+            console.log('🚀 Emergency loader active');
+            
+            // Force hide loading screen after timeout
+            setTimeout(function() {
+                var loadingScreen = document.getElementById('loading-screen');
+                var app = document.getElementById('app');
+                
+                if (loadingScreen && app) {
+                    console.log('✅ Force-showing app (fallback)');
+                    loadingScreen.style.display = 'none';
+                    app.style.display = 'flex';
+                }
+            }, 2000);
+        })();
+    </script>
+
+    <!-- Main JavaScript - CRITICAL: Make sure this path is correct -->
+    <script src="js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: parking-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: parking_db
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - parking-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/parking_db --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: parking-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - parking-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parking-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/parking_db?authSource=admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/logs:/app/logs
+      - ./backend/public/uploads:/app/public/uploads
+      - backend_node_modules:/app/node_modules
+    networks:
+      - parking-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend PWA
+  frontend:
+    build:
+      context: ./frontend-pwa
+      dockerfile: Dockerfile
+    container_name: parking-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    environment:
+      API_URL: http://backend:5000/api
+      WS_URL: ws://backend:5000
+    volumes:
+      - ./frontend-pwa/dist:/usr/share/nginx/html:ro
+      - ./frontend-pwa/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - parking-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: parking-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./frontend-pwa/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - parking-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  redis_data:
+    driver: local
+  backend_node_modules:
+    driver: local
+
+networks:
+  parking-network:
+    driver: bridge
+
+# Usage Instructions:
+#
+# 1. Set up environment:
+#    cp .env.example .env
+#    # Edit .env with your configuration
+#
+# 2. Build and start services:
+#    docker-compose up -d
+#
+# 3. View logs:
+#    docker-compose logs -f
+#
+# 4. Stop services:
+#    docker-compose down
+#
+# 5. Stop and remove volumes (CAUTION: deletes data):
+#    docker-compose down -v
+#
+# 6. Rebuild services:
+#    docker-compose up -d --build
+#
+# Access:
+# - Frontend: http://localhost:80
+# - Backend API: http://localhost:5000/api
+# - MongoDB: mongodb://admin:password123@localhost:27017
+# - Redis: redis://localhost:6379

@@ -1,0 +1,60 @@
+{
+  "name": "smart-parking-system",
+  "version": "1.0.0",
+  "description": "Complete Smart Parking Management System with PWA frontend and Node.js backend",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend-pwa && npm start",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend-pwa && npm install",
+    "build": "cd frontend-pwa && npm run build",
+    "start": "cd backend && npm start",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend-pwa && npm test",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend-pwa && npm run lint",
+    "format": "prettier --write \"**/*.{js,json,css,md}\"",
+    "deploy": "bash scripts/deploy.sh",
+    "seed": "cd backend && npm run seed",
+    "backup": "bash scripts/backup.sh",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "prepare": "husky install"
+  },
+  "keywords": [
+    "parking",
+    "iot",
+    "pwa",
+    "mongodb",
+    "nodejs",
+    "firebase",
+    "razorpay",
+    "google-maps"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/smart-parking-system.git"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1"
+  },
+  "lint-staged": {
+    "*.{js,json,css,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
